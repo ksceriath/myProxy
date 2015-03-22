@@ -8,6 +8,8 @@ public class SimpleProxy3 {
 	public static String HOST = "localhost";
 	public static int PORT = 80;
 	
+	public static int PROXYPORT = 8080;
+	
 	public static void threadLogn(String message) {
 		System.out.println("["+Thread.currentThread().getName()+"] "+message);
 	}
@@ -21,7 +23,7 @@ public class SimpleProxy3 {
 	}
 	
 	public static void main(String[] args) {
-		int port = 8080;
+		int port = PROXYPORT;
 		Server server = new Server(port);
 		
 		Thread serverThread = new Thread(server);
@@ -37,11 +39,13 @@ public class SimpleProxy3 {
 	}
 }
 
+
+/* Class that opens a server socket for the Proxy server */
 class Server implements Runnable {
 	
 	boolean serverOn;
 	int port;
-	ServerSocket serverSocket;
+	ServerSocket serverSocket;		// proxy server
 	
 	Server(int port) {
 		this.port = port;
@@ -93,10 +97,12 @@ class Server implements Runnable {
 	}
 }
 
+/* Class that manages and processes the socket connections to 
+ * the Main Server and each connected client */
 class Client implements Runnable {
 	
-	Socket clientSocket;
-	Socket mainServerSocket;
+	Socket clientSocket;				// requesting client
+	Socket mainServerSocket;			// responding server
 	
 	Client(Socket clientSocket) {
 		this.clientSocket = clientSocket;
@@ -120,7 +126,6 @@ class Client implements Runnable {
 				
 				public String process(String message) {
 					//do something with message here...
-					message += "\n";
 					return message;
 				}
 			};
@@ -134,7 +139,6 @@ class Client implements Runnable {
 				
 				public String process(String message) {
 					// do something with message here...
-					message += "\n";
 					return message;
 				}
 			};
@@ -174,7 +178,7 @@ class X implements Runnable {
 	OutputStream outputStream;
 	
 	X(InputStream inputStream, OutputStream outputStream) {
-		this. inputStream = inputStream;
+		this.inputStream = inputStream;
 		this.outputStream = outputStream;
 	}
 	
@@ -209,6 +213,7 @@ class X implements Runnable {
 				e.printStackTrace();
 			}
 		}
+		request += "\n";
 		SimpleProxy3.threadLog("reading: ");
 		for(int i=0; i<contentLength; i++) {
 			char ch = 0;
@@ -230,25 +235,9 @@ class X implements Runnable {
 	
 	private void write(String message) {
 		SimpleProxy3.threadLogn("writing:\n"+message);
-		for(char c : message.toCharArray()){
-			try {
-				outputStream.write(c);
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-		}
-//		BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(outputStream));
-//		try {
-//			bw.write(message);
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-		try {
-			outputStream.flush();
-//			bw.flush();
-			SimpleProxy3.threadLogn("Written and flushed.");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		PrintWriter outputter = new PrintWriter(outputStream);
+		outputter.print(message);
+		outputter.flush();
+		SimpleProxy3.threadLogn("Written and flushed.");
 	}
 }
